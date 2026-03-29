@@ -9,8 +9,8 @@
   "sealring_x": 3600.0,
   "sealring_y": 5000.0,
   "repository": "https://github.com/TinyTapeout/tinytapeout-ihp-0p4-foundry-submission",
-  "pdk_version": "2dcbf0761b18342baeb85b0f5a94e2bec22db496",
-  "pdk_repository": "https://github.com/IHP-GmbH/IHP-Open-PDK",
+  "pdk_version": "1178c4fac07974139cb991e54ccf38adf86be30c",
+  "pdk_repository": "https://github.com/IHP-GmbH/ihp-sg13cmos5l",
   "process": "SG13CMOS5L",
   "dependencies": {},
   "tools": {
