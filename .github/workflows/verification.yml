@@ -1,0 +1,142 @@
+name: Physical Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  precheck-drc:
+    name: Precheck DRC
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read info.json
+        id: info
+        run: |
+          echo "gds_path=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['release']['gds'])")" >> "$GITHUB_OUTPUT"
+          echo "top_cell=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['top_cell_name'])")" >> "$GITHUB_OUTPUT"
+          echo "pdk_version=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['pdk_version'])")" >> "$GITHUB_OUTPUT"
+          echo "pdk_repo=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d.get('pdk_repository', 'https://github.com/IHP-GmbH/IHP-Open-PDK'))")" >> "$GITHUB_OUTPUT"
+
+      - name: Install KLayout
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y klayout
+
+      - name: Clone IHP-Open-PDK
+        run: |
+          git clone "${{ steps.info.outputs.pdk_repo }}" IHP-Open-PDK
+          cd IHP-Open-PDK && git checkout "${{ steps.info.outputs.pdk_version }}"
+
+      - name: Run Precheck DRC (minimal rules)
+        run: |
+          klayout -b -r IHP-Open-PDK/ihp-sg13g2/libs.tech/klayout/tech/drc/sg13g2_minimal.lydrc \
+            -rd "in_gds=${{ steps.info.outputs.gds_path }}" \
+            -rd "cell=${{ steps.info.outputs.top_cell }}" \
+            -rd "report_file=precheck_drc_report.lyrdb" \
+            2>&1 | tee precheck_drc.log
+          echo "Precheck DRC completed"
+
+      - name: Upload precheck DRC results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: precheck-drc-results
+          path: |
+            precheck_drc*
+            release/**/*.lyrdb
+
+  full-drc:
+    name: Full DRC
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read info.json
+        id: info
+        run: |
+          echo "gds_path=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['release']['gds'])")" >> "$GITHUB_OUTPUT"
+          echo "top_cell=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['top_cell_name'])")" >> "$GITHUB_OUTPUT"
+          echo "pdk_version=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['pdk_version'])")" >> "$GITHUB_OUTPUT"
+          echo "pdk_repo=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d.get('pdk_repository', 'https://github.com/IHP-GmbH/IHP-Open-PDK'))")" >> "$GITHUB_OUTPUT"
+
+      - name: Install KLayout
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y klayout
+
+      - name: Clone IHP-Open-PDK
+        run: |
+          git clone "${{ steps.info.outputs.pdk_repo }}" IHP-Open-PDK
+          cd IHP-Open-PDK && git checkout "${{ steps.info.outputs.pdk_version }}"
+
+      - name: Run Full DRC (maximal rules)
+        run: |
+          klayout -b -r IHP-Open-PDK/ihp-sg13g2/libs.tech/klayout/tech/drc/sg13g2_maximal.lydrc \
+            -rd "in_gds=${{ steps.info.outputs.gds_path }}" \
+            -rd "cell=${{ steps.info.outputs.top_cell }}" \
+            -rd "report_file=full_drc_report.lyrdb" \
+            2>&1 | tee full_drc.log
+          echo "Full DRC completed"
+
+      - name: Upload full DRC results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: full-drc-results
+          path: |
+            full_drc*
+            release/**/*.lyrdb
+
+  density-check:
+    name: Metal Density Check
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read info.json
+        id: info
+        run: |
+          echo "gds_path=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['release']['gds'])")" >> "$GITHUB_OUTPUT"
+          echo "top_cell=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['top_cell_name'])")" >> "$GITHUB_OUTPUT"
+          echo "pdk_version=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d['pdk_version'])")" >> "$GITHUB_OUTPUT"
+          echo "pdk_repo=$(python3 -c "import json; d=json.load(open('doc/info.json')); print(d.get('pdk_repository', 'https://github.com/IHP-GmbH/IHP-Open-PDK'))")" >> "$GITHUB_OUTPUT"
+
+      - name: Install KLayout
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y klayout
+
+      - name: Clone IHP-Open-PDK
+        run: |
+          git clone "${{ steps.info.outputs.pdk_repo }}" IHP-Open-PDK
+          cd IHP-Open-PDK && git checkout "${{ steps.info.outputs.pdk_version }}"
+
+      - name: Run Metal Density Check
+        run: |
+          klayout -b -zz \
+            -r IHP-Open-PDK/ihp-sg13g2/libs.tech/klayout/tech/drc/sg13g2_density.lydrc \
+            -rd "in_gds=${{ steps.info.outputs.gds_path }}" \
+            -rd "cell=${{ steps.info.outputs.top_cell }}" \
+            -rd "report_file=density_report.lyrdb" \
+            -rd "threads=4" \
+            2>&1 | tee density_report.log
+          echo "Metal density check completed"
+
+      - name: Upload density results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: density-results
+          path: |
+            density_report.*

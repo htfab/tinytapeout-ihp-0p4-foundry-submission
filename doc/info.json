@@ -1,0 +1,33 @@
+{
+  "name": "TT0004",
+  "design_type": "D",
+  "technology": "IHP",
+  "unique_id": "0004",
+  "license": "Apache-2.0",
+  "trl": 5,
+  "trl_level": 5,
+  "sealring_x": 3600.0,
+  "sealring_y": 5000.0,
+  "repository": "https://github.com/TinyTapeout/tinytapeout-ihp-0p4-foundry-submission",
+  "pdk_version": "2dcbf0761b18342baeb85b0f5a94e2bec22db496",
+  "pdk_repository": "https://github.com/IHP-GmbH/IHP-Open-PDK",
+  "process": "SG13CMOS5L",
+  "dependencies": {},
+  "tools": {
+    "LibreLane": "RTL-to-GDS flow",
+    "OpenROAD": "Place and Route",
+    "Yosys": "Synthesis",
+    "Magic": "SPICE extraction",
+    "Netgen": "LVS",
+    "KLayout": "DRC, GDS streamout"
+  },
+  "top_cell_name": "TT0004",
+  "gds_path": "release/v.1.0.0/gds/TT0004.oas",
+  "netlist_path": "release/v.1.0.0/netlist/tt_ihp_wrapper.nl.v",
+  "release": {
+    "version": "v.1.0.0",
+    "gds": "release/v.1.0.0/gds/TT0004.oas",
+    "netlist": "release/v.1.0.0/netlist/tt_ihp_wrapper.nl.v",
+    "doc": "release/v.1.0.0/doc"
+  }
+}
